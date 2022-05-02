@@ -23,12 +23,12 @@ class DMonitoringResult:
         self.partial_face = output[0, 35]
         self.distracted_pose = output[0, 36]
         self.distracted_eyes = output[0, 37]
-        # self.occluded_prob = output[38]
+        self.occluded_prob = output[0, 38]
 
 
 class DRIVER_MONITOR_SETTINGS():
-
     def __init__(self):
+        self._DT_DMON = 0.1
         self._AWARENESS_TIME = 35.  # passive wheeltouch total timeout
         self._AWARENESS_PRE_TIME_TILL_TERMINAL = 12.
         self._AWARENESS_PROMPT_TIME_TILL_TERMINAL = 6.
@@ -37,11 +37,11 @@ class DRIVER_MONITOR_SETTINGS():
         self._DISTRACTED_PROMPT_TIME_TILL_TERMINAL = 6.
 
         self._FACE_THRESHOLD = 0.5
-        self._PARTIAL_FACE_THRESHOLD = 0.765  # if TICI else 0.43
-        self._EYE_THRESHOLD = 0.61  # if TICI else 0.55
-        self._SG_THRESHOLD = 0.89   # if TICI else 0.86
-        self._BLINK_THRESHOLD = 0.82   # if TICI else 0.588
-        self._BLINK_THRESHOLD_SLACK = 0.9  # if TICI else 0.77
+        self._PARTIAL_FACE_THRESHOLD = 0.43  # 0.765 if TICI else 0.43
+        self._EYE_THRESHOLD = 0.55   # 0.61 if TICI else 0.55
+        self._SG_THRESHOLD = 0.86   # 0.89 if TICI else 0.86
+        self._BLINK_THRESHOLD = 0.588   # 0.82 if TICI else 0.588
+        self._BLINK_THRESHOLD_SLACK = 0.77  # 0.9 if TICI else 0.77
         self._BLINK_THRESHOLD_STRICT = self._BLINK_THRESHOLD
 
         self._POSE_PITCH_THRESHOLD = 0.3237
@@ -50,26 +50,26 @@ class DRIVER_MONITOR_SETTINGS():
         self._POSE_YAW_THRESHOLD = 0.3109
         self._POSE_YAW_THRESHOLD_SLACK = 0.4294
         self._POSE_YAW_THRESHOLD_STRICT = self._POSE_YAW_THRESHOLD
-        self._PITCH_NATURAL_OFFSET = 0.057 # initial value before offset is learned
-        self._YAW_NATURAL_OFFSET = 0.11 # initial value before offset is learned
+        self._PITCH_NATURAL_OFFSET = 0.057  # initial value before offset is learned
+        self._YAW_NATURAL_OFFSET = 0.11  # initial value before offset is learned
         self._PITCH_MAX_OFFSET = 0.124
         self._PITCH_MIN_OFFSET = -0.0881
         self._YAW_MAX_OFFSET = 0.289
         self._YAW_MIN_OFFSET = -0.0246
 
-        self._POSESTD_THRESHOLD = 0.38   # if TICI else 0.3
-        # self._HI_STD_FALLBACK_TIME = int(10  / self._DT_DMON)  # fall back to wheel touch if model is uncertain for 10s
+        self._POSESTD_THRESHOLD = 0.3   # 0.38 if TICI else 0.3
+        self._HI_STD_FALLBACK_TIME = int(10  / self._DT_DMON)  # fall back to wheel touch if model is uncertain for 10s
         self._DISTRACTED_FILTER_TS = 0.25  # 0.6Hz
 
         self._POSE_CALIB_MIN_SPEED = 13  # 30 mph
-        # self._POSE_OFFSET_MIN_COUNT = int(60 / self._DT_DMON)  # valid data counts before calibration completes, 1min cumulative
-        # self._POSE_OFFSET_MAX_COUNT = int(360 / self._DT_DMON)  # stop deweighting new data after 6 min, aka "short term memory"
+        self._POSE_OFFSET_MIN_COUNT = int(60 / self._DT_DMON)  # valid data counts before calibration completes, 1min cumulative
+        self._POSE_OFFSET_MAX_COUNT = int(360 / self._DT_DMON)  # stop deweighting new data after 6 min, aka "short term memory"
 
         self._RECOVERY_FACTOR_MAX = 5.  # relative to minus step change
         self._RECOVERY_FACTOR_MIN = 1.25  # relative to minus step change
 
         self._MAX_TERMINAL_ALERTS = 3  # not allowed to engage after 3 terminal alerts
-        # self._MAX_TERMINAL_DURATION = int(30 / self._DT_DMON)  # not allowed to engage after 30s of terminal alerts
+        self._MAX_TERMINAL_DURATION = int(30 / self._DT_DMON)  # not allowed to engage after 30s of terminal alerts
 
 
 class DriverPose():
@@ -102,8 +102,8 @@ def face_orientation_from_net(angles_desc, pos_desc):
     pitch_net, yaw_net, roll_net = angles_desc
 
     face_pixel_position = ((pos_desc[0] + .5)*W - W + FULL_W, (pos_desc[1]+.5)*H)
-    yaw_focal_angle = 0  # np.arctan2(face_pixel_position[0] - FULL_W//2, RESIZED_FOCAL)
-    pitch_focal_angle = 0  # np.arctan2(face_pixel_position[1] - H//2, RESIZED_FOCAL)
+    yaw_focal_angle = np.arctan2(face_pixel_position[0] - FULL_W//2, RESIZED_FOCAL)
+    pitch_focal_angle = np.arctan2(face_pixel_position[1] - H//2, RESIZED_FOCAL)
 
     pitch = pitch_net + pitch_focal_angle
     yaw = -yaw_net + yaw_focal_angle
@@ -177,7 +177,6 @@ class DriverStatus():
                                                                                    driver_state.face_position)
         self.pose.pitch_std = driver_state.face_orientation_meta[0]
         self.pose.yaw_std = driver_state.face_orientation_meta[1]
-        # self.pose.roll_std = driver_state.faceOrientationStd[2]
         model_std_max = max(self.pose.pitch_std, self.pose.yaw_std)
         self.pose.low_std = model_std_max < self.settings._POSESTD_THRESHOLD and not self.face_partial
         self.blink.left_blink = driver_state.left_blink_prob * (
@@ -189,7 +188,7 @@ class DriverStatus():
 
         self.driver_distracted = self._is_driver_distracted(self.pose, self.blink) > 0 and \
                                  driver_state.face_prob > self.settings._FACE_THRESHOLD and self.pose.low_std
-        self.distracted = self.driver_distracted or not self.pose.low_std or self.face_partial
+        self.distracted = self.driver_distracted or not self.face_detected
 
         # update offseter
         # only update when driver is actively driving the car above a certain speed
@@ -201,5 +200,14 @@ class DriverStatus():
         #     self.hi_stds += 1
         # elif self.face_detected and self.pose.low_std:
         #     self.hi_stds = 0
+
+
+def distracted_detect(outputs):
+
+    dmonitoringResults = DMonitoringResult(outputs[0])
+    driverStats = DriverStatus()
+    driverStats.get_pose(dmonitoringResults)
+
+    return dmonitoringResults, driverStats
 
 
