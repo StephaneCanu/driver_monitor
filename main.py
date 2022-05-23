@@ -44,6 +44,10 @@ def play(args):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.putText(frame, f'Partial_face: {dmonitoringResults.partial_face}', (30, 60),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(frame_attack, f'Face_prob: {dmonitoringResults_attack.face_prob}', (30, 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            cv2.putText(frame_attack, f'Partial_face: {dmonitoringResults_attack.partial_face}', (30, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.putText(frame, f'Face_orientation: {dmonitoringResults.face_orientation*180/np.pi}', (30, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
             cv2.putText(frame, f'Face_orientationStd: {dmonitoringResults.face_orientation_meta*180/np.pi}', (30, 140),
@@ -58,13 +62,18 @@ def play(args):
                         (30, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.putText(frame, f'Is_distracted: '
                                f'{driverStats.distracted}',(30, 320),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            cv2.putText(frame, f'Is_distracted_after_attack: '
-                               f'{driverStats_attack.distracted}', (30, 360), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            cv2.putText(frame_attack, f'Is_distracted_after_attack: '
+                               f'{driverStats_attack.distracted}', (30, 320), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             if driverStats.distracted:
                 cv2.putText(frame, f'Alert: KEEP EYES ON ROAD ', (30, 400), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
             cv2.rectangle(frame, (int(rec[0]+320*.015), int(rec[1]+640*0.15)),
                           (int(rec[0]+rec[2]-320*0.15), int(rec[1]+rec[3]-640*0.15)),
+                          (0, 255, 0), 5)
+
+            cv2.rectangle(frame_attack, (int(rec[0] + 320 * .015), int(rec[1] + 640 * 0.15)),
+                          (int(rec[0] + rec[2] - 320 * 0.15), int(rec[1] + rec[3] - 640 * 0.15)),
                           (0, 255, 0), 5)
             # cv2.rectangle(frame1, (rec[0], rec[1]), (rec[0] + rec[2], rec[1] + rec[3]), (0, 255, 0), 5)
             # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
