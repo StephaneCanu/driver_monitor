@@ -2,7 +2,7 @@ import cv2
 import argparse
 from head_pose_detect import head_pose_detect
 from demonitoring import distracted_detect
-from camera_param import trans_webcam_to_eon_front, trans_webcam_to_eon_front_1
+from camera_param import trans_webcam_to_eon_front, WEBCAM_WIDTH, WEBCAM_HEIGHT
 
 import torch
 import numpy as np
@@ -12,9 +12,6 @@ import threading
 
 global alert
 alert = False
-
-WEBCAM_WIDTH = 1152
-WEBCAM_HEIGHT = 864
 
 
 def play(args):
@@ -35,11 +32,13 @@ def play(args):
             frame = cv2.warpPerspective(frame, trans_webcam_to_eon_front, (WEBCAM_WIDTH, WEBCAM_HEIGHT),
                                         borderMode=cv2.BORDER_CONSTANT, borderValue=0)
 
-            outputs, rec = head_pose_detect(frame, args.Is_RHD)
+            outputs, attack_outputs, frame_attack, rec = head_pose_detect(frame, args.Is_RHD)
             dmonitoringResults, driverStats = distracted_detect(outputs)
+            dmonitoringResults_attack, driverStats_attack = distracted_detect(attack_outputs)
             #
-            cv2.circle(frame, (int((dmonitoringResults.face_position[0]+0.5)*(372-320*0.3)-372+320*0.15+1152),
-                               int((dmonitoringResults.face_position[1]+0.5)*(864-640*0.3)+640*0.15)), 20, (255, 0, 0), 5)
+            head_position_x = int((dmonitoringResults.face_position[0]+0.5)*(372-320*0.3)-372+320*0.15+1152)
+            head_position_y = int((dmonitoringResults.face_position[1]+0.5)*(864-640*0.3)+640*0.15)
+            cv2.rectangle(frame, (head_position_x-40, head_position_y-100), (head_position_x+50, head_position_y+10), (255, 0, 0), 5)
 
             cv2.putText(frame, f'Face_prob: {dmonitoringResults.face_prob}', (30, 20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
@@ -59,8 +58,10 @@ def play(args):
                         (30, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.putText(frame, f'Is_distracted: '
                                f'{driverStats.distracted}',(30, 320),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            cv2.putText(frame, f'Is_distracted_after_attack: '
+                               f'{driverStats_attack.distracted}', (30, 360), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             if driverStats.distracted:
-                cv2.putText(frame, f'Alert: KEEP EYES ON ROAD ', (30, 360), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                cv2.putText(frame, f'Alert: KEEP EYES ON ROAD ', (30, 400), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
             cv2.rectangle(frame, (int(rec[0]+320*.015), int(rec[1]+640*0.15)),
                           (int(rec[0]+rec[2]-320*0.15), int(rec[1]+rec[3]-640*0.15)),
@@ -69,7 +70,8 @@ def play(args):
             # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
             # output.write(frame)
             # frame = cv2.resize(frame, (frame_width*2, frame_height*2))
-            cv2.imshow('Distraction detection', frame)
+            show_img = np.hstack((frame, frame_attack))
+            cv2.imshow('Distraction detection', show_img)
             if cv2.waitKey(1) and 0xFF == 'q':
                 break
         else:

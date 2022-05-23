@@ -1,10 +1,11 @@
 import numpy as np
 import torch
 import torch.nn as nn
+from distraction import Is_Distraction
 
 
 RESIZED_FOCAL = 320.0
-H, W, FULL_W = 320, 160, 426
+W, H, FULL_H, FULL_W = 320, 640, 864, 1152
 
 
 class DMonitoringResult:
@@ -58,7 +59,7 @@ class DRIVER_MONITOR_SETTINGS():
         self._YAW_MIN_OFFSET = -0.0246
 
         self._POSESTD_THRESHOLD = 0.3   # 0.38 if TICI else 0.3
-        self._HI_STD_FALLBACK_TIME = int(10  / self._DT_DMON)  # fall back to wheel touch if model is uncertain for 10s
+        self._HI_STD_FALLBACK_TIME = int(10 / self._DT_DMON)  # fall back to wheel touch if model is uncertain for 10s
         self._DISTRACTED_FILTER_TS = 0.25  # 0.6Hz
 
         self._POSE_CALIB_MIN_SPEED = 13  # 30 mph
@@ -101,9 +102,9 @@ def face_orientation_from_net(angles_desc, pos_desc):
 
     pitch_net, yaw_net, roll_net = angles_desc
 
-    face_pixel_position = ((pos_desc[0] + .5)*W - W + FULL_W, (pos_desc[1]+.5)*H)
-    yaw_focal_angle = np.arctan2(face_pixel_position[0] - FULL_W//2, RESIZED_FOCAL)
-    pitch_focal_angle = np.arctan2(face_pixel_position[1] - H//2, RESIZED_FOCAL)
+    face_pixel_position = ((pos_desc[0] + .5)*(372-W*0.3)-372+W*0.15+FULL_W, (pos_desc[1]+.5)*(864-H*0.3)+640*0.15)
+    yaw_focal_angle = np.arctan2(face_pixel_position[0] - FULL_W//2, 1403)
+    pitch_focal_angle = np.arctan2(face_pixel_position[1] - FULL_H//2, 1266)
 
     pitch = pitch_net + pitch_focal_angle
     yaw = -yaw_net + yaw_focal_angle

@@ -27,11 +27,21 @@ webcam_intrinsics = np.array([
   [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
 ])
 
+webcam_intrinsics_pandora = np.array([
+  [480, 0.00000000e+00, 780],
+  [0.00000000e+00, 480, 380],
+  [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
+])
+
 trans_webcam_to_eon_front = np.dot(eon_dcam_intrinsics, np.linalg.inv(webcam_intrinsics))
+trans_webcam_to_eon_front_pandora = np.dot(eon_dcam_intrinsics, np.linalg.inv(webcam_intrinsics_pandora))
 
 trans_webcam_to_eon_front_1 = np.array([[1.42070485, 0.0, -30.16740088],
          [0.0, 1.42070485, 91.030837],
          [0.0, 0.0, 1.0]])
+
+WEBCAM_WIDTH = 1152
+WEBCAM_HEIGHT = 864
 
 
 if __name__ == '__main__':

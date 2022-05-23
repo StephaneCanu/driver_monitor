@@ -57,7 +57,6 @@ cv2.destroyAllWindows()
 
 h, w = image.shape[:2]
 
-
 # Perform camera calibration by
 # passing the value of above found out 3D points (threedpoints)
 # and its corresponding pixel coordinates of the

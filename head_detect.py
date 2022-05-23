@@ -2,7 +2,7 @@
 from deepface import DeepFace
 import cv2
 from torchvision import transforms
-from model import HeadLocModel, Poseidon, load_weight
+from poseidon_model import HeadLocModel, Poseidon, load_weight
 from PIL import Image
 
 

@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 import logging
 import time
 from tqdm import trange, tqdm
-from model import Poseidon, HeadLocModel
+from poseidon_model import Poseidon, HeadLocModel
 from torch.utils.data import DataLoader
-from data_preprocessing import PandoraData
+from dataset_pandora import PandoraData
 
 from torch.utils.data.distributed import DistributedSampler
 # import local rank from sys environment

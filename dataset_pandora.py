@@ -7,20 +7,28 @@ from torchvision import transforms
 from PIL import Image
 import numpy as np
 from skimage import io
+import csv
 
 
-def read_annotation(file):
+def read_annotation(file_pose, file_distracted):
 
     angles = {}
     head_pos = {}
-    with open(file=file, mode="r") as f:
+    with open(file=file_pose, mode="r") as f:
         lines = f.readlines()
         for l in lines:
             data = l.rstrip().split('\t')
             angles[data[1]] = np.array([float(data[2]), float(data[3]), float(data[4])], dtype=np.float32)  # [yaw, roll, pitch]
             head_pos[data[1]] = np.array([float(data[107])/1920.0, float(data[108])/1080.0], dtype=np.float32)  # [x, y]
 
-    return angles, head_pos
+    distracted = {}
+    with open(file=file_distracted, mode='r') as f:
+        csv_reader = csv.reader(f)
+        header = next(csv_reader)
+        for data in csv_reader:
+            distracted[data[0]] = np.array([float(data[1])], dtype=np.float32)
+
+    return angles, head_pos, distracted
 
 
 def make_samples(root, modal, n_sub=None):
@@ -38,12 +46,13 @@ def make_samples(root, modal, n_sub=None):
                 image_folder = os.path.join(subject.path, 'DEPTH')
 
             # read annotation and get yaw, roll and pitch
-            angles, head_pos = read_annotation(os.path.join(subject.path, 'data.txt'))
+            angles, head_pos, distracted = read_annotation(os.path.join(subject.path, 'data.txt'),
+                                                           os.path.join(subject.path, 'distracted.csv'))
 
             # create images path list
             for imgs in os.scandir(image_folder):
                 samples.append((subject.name, imgs.path, angles[imgs.name.split('_')[0]],
-                                head_pos[imgs.name.split('_')[0]]))
+                                head_pos[imgs.name.split('_')[0]], distracted[imgs.name]))
 
     return samples
 
@@ -68,20 +77,19 @@ class PandoraData(Dataset):
         data = self.samples[item]
         img = cv2.imread(data[1])
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(img)
-        img = self.transform(img)
+        # img = Image.fromarray(img)
+        # if self.transform:
+        #     img = self.transform(img)
         angle = data[2]
         head_pos = data[3]
-        return img, angle, head_pos
+        distracted = data[4]
+        return img, angle, head_pos, distracted
 
 
 if __name__ == '__main__':
     root = 'dataset/pandora/'
-    transform = transforms.Compose([
-        transforms.Resize((135, 160)),
-        transforms.ToTensor(),
-    ])
-    dataset = PandoraData(root=root, transform=transform, modal='RGB')
+    dataset = PandoraData(root=root, modal='RGB')
+    torch.save(dataset, os.path.join(root, 'pandora.bin'))
 
 
 
