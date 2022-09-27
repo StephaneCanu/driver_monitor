@@ -4,7 +4,7 @@ import onnxruntime as ort
 import torch
 
 from attack import make_attack_img
-from image_processing import make_attack_frame, im_preprocessing
+from image_processing import make_frame, im_preprocessing
 from demonitoring import distracted_detect
 from distraction import Is_Distraction
 
@@ -30,8 +30,8 @@ def head_pose_detect(frame, is_RHD):
 
     inputs = (inputs - 128.) * 0.0078125
 
-    ort_session = ort.InferenceSession("dmonitoring_model_version_2.onnx",
-                                    providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+    ort_session = ort.InferenceSession("models/dmonitoring_model_version_2.onnx",
+                                       providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
     outputs = ort_session.run(None, {"input_img": inputs.astype(np.float32)}, )
 
     _, driverStats = distracted_detect(outputs)
@@ -42,7 +42,7 @@ def head_pose_detect(frame, is_RHD):
 
     attack_img = make_attack_img(inputs)
     outputs_attack = ort_session.run(None, {"input_img": attack_img.astype(np.float32)}, )
-    frame_attack = make_attack_frame(inputs, frame, rec)
+    frame_attack = make_frame(inputs, frame, rec)
 
     return outputs, outputs_attack, frame_attack, rec
 

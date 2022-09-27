@@ -44,8 +44,8 @@ class Is_Distraction(nn.Module):
         self.face_position_x = (y[:, 3:4] + 0.5) * (W - 2 * BW) + FULL_W - W + BW
         self.face_position_y = (y[:, 4:5] + 0.5) * (H - 2 * BH) + BH
 
-        self.pose_pitch = y[:, 0:1] + torch.atan2(self.face_position_y - H // 2, self.f_y)
-        self.pose_yaw = -y[:, 1:2] + torch.atan2(self.face_position_x - FULL_W // 2, self.f_x)
+        self.pose_pitch = y[:, 0:1]  # + torch.atan2(self.face_position_y - H // 2, self.f_y)
+        self.pose_yaw = -y[:, 1:2]  #+ torch.atan2(self.face_position_x - FULL_W // 2, self.f_x)
         self.pose_pitch_err = nn.ReLU()(-self.pose_pitch + PITCH_NATURAL_OFFSET)
         self.pose_yaw_err = abs(self.pose_yaw - YAW_NATURAL_OFFSET)
 
@@ -58,5 +58,6 @@ class Is_Distraction(nn.Module):
         # self.non_distracted = self.face_detected*(self.good_pose*self.good_blink)
 
         # return self.distracted
-        return torch.hstack((self.face_detected, self.not_face_detected))
+        return torch.hstack((nn.ReLU()(self.face)+nn.ReLU()(-self.face_partial),
+                             nn.ReLU()(-self.face)*nn.ReLU()(self.face_partial)))
 

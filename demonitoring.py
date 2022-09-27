@@ -4,7 +4,8 @@ import torch.nn as nn
 from distraction import Is_Distraction
 
 
-RESIZED_FOCAL = 320.0
+# RESIZED_FOCAL_x, RESIZED_FOCAL_y = 1403, 1266  # focal length for webcom
+RESIZED_FOCAL_x, RESIZED_FOCAL_y = 760, 760  # focal length of camera in Pandora
 W, H, FULL_H, FULL_W = 320, 640, 864, 1152
 
 
@@ -103,11 +104,11 @@ def face_orientation_from_net(angles_desc, pos_desc):
     pitch_net, yaw_net, roll_net = angles_desc
 
     face_pixel_position = ((pos_desc[0] + .5)*(372-W*0.3)-372+W*0.15+FULL_W, (pos_desc[1]+.5)*(864-H*0.3)+640*0.15)
-    yaw_focal_angle = np.arctan2(face_pixel_position[0] - FULL_W//2, 1403)
-    pitch_focal_angle = np.arctan2(face_pixel_position[1] - FULL_H//2, 1266)
+    yaw_focal_angle = np.arctan2(face_pixel_position[0] - FULL_W//2, RESIZED_FOCAL_x)
+    pitch_focal_angle = np.arctan2(face_pixel_position[1] - FULL_H//2, RESIZED_FOCAL_y)
 
-    pitch = pitch_net + pitch_focal_angle
-    yaw = -yaw_net + yaw_focal_angle
+    pitch = pitch_net  # + pitch_focal_angle
+    yaw = yaw_net  # + yaw_focal_angle
 
     # # no calib for roll
     # pitch -= rpy_calib[1]

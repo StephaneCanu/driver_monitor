@@ -28,13 +28,20 @@ webcam_intrinsics = np.array([
 ])
 
 webcam_intrinsics_pandora = np.array([
-  [480, 0.00000000e+00, 780],
-  [0.00000000e+00, 480, 380],
+  [1280, 0.00000000e+00, 660],
+  [0.00000000e+00, 720, 280],
+  [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
+])
+
+webcam_intrinsics_dmd = np.array([
+  [924.4637451171875, 0.0, 180],
+  [0.0, 923.7325439453125, 362],
   [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]
 ])
 
 trans_webcam_to_eon_front = np.dot(eon_dcam_intrinsics, np.linalg.inv(webcam_intrinsics))
 trans_webcam_to_eon_front_pandora = np.dot(eon_dcam_intrinsics, np.linalg.inv(webcam_intrinsics_pandora))
+trans_webcam_to_eon_front_dmd = np.dot(eon_dcam_intrinsics, np.linalg.inv(webcam_intrinsics_dmd))
 
 trans_webcam_to_eon_front_1 = np.array([[1.42070485, 0.0, -30.16740088],
          [0.0, 1.42070485, 91.030837],
